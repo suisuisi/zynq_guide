@@ -1,0 +1,144 @@
+;Copyright (c) 2015, Adam Taylor
+;All rights reserved.
+
+;Redistribution and use in source and binary forms, with or without
+;modification, are permitted provided that the following conditions are met:
+
+;1. Redistributions of source code must retain the above copyright notice, this
+;   list of conditions and the following disclaimer. 
+;2. Redistributions in binary form must reproduce the above copyright notice,
+;   this list of conditions and the following disclaimer in the documentation
+;   and/or other materials provided with the distribution.
+
+;THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+;ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+;WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+;DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+;ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+;(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+;LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+;ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+;(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+;SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+;The views and conclusions contained in the software and documentation are those
+;of the authors and should not be interpreted as representing official policies, 
+;either expressed or implied, of the FreeBSD Project
+
+NAMEREG s0,phase  ;rename S0 register to led
+
+;as 8 bit processor we need four delay loops 256 * 256 * 256 * 256 = 4294967296 
+																
+CONSTANT max1, 40 ;set delay 
+CONSTANT max2, 00 ;set delay 
+CONSTANT max3, 00 ;set delay 
+CONSTANT max4, 00 ;set delay
+
+CONSTANT max_line1, ff ;set delay 
+CONSTANT max_line2, 07 ;set delay 
+
+
+
+main:	LOAD phase, 00; load the led output register with 00
+		OUTPUT phase,01; output the register 
+		CALL delay_init; wait for the delay 
+		
+		OR phase, 04; set I3 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		OR phase, 08; set I4 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		AND phase, 08; set I3 low keep i4 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		OR phase, 09; set i1 high keep i4 high 
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		OR phase, 0B; set i2 high keep i4 and i1 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		AND phase, 03; clear i4 keep i1 and i2 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		AND phase, 02; clear i1 keep i2 high
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		AND phase, 00; clear all
+		OUTPUT phase,01; output the register
+		CALL delay_init; wait for the delay
+		
+		CALL delay_line; 
+		
+		JUMP main; loop back to beginning
+
+delay_init: LOAD s4, max4;
+			LOAD s3, max3;
+			LOAD s2, max2;
+			LOAD s1, max1;
+
+delay_loop:	SUB s1, 1'd; subtract 1 decimal from s1
+			SUBCY s2, 0'd; carry subtraction 
+			SUBCY s3, 0'd; carry subtraction
+			SUBCY s4, 0'd; carry subtraction 
+			JUMP NZ, delay_loop;
+			RETURN 
+
+delay_line: LOAD s2, max_line2;
+			LOAD s1, max_line1;			
+line_loop:	SUB s1, 1'd; subtract 1 decimal from s1
+			SUBCY s2, 0'd; carry subtraction 
+			
+			OR phase, 10;
+			OUTPUT phase,01; output the register
+			OR phase, 10;
+			OUTPUT phase,01; output the register
+			OR phase, 10;
+			OUTPUT phase,01; output the register
+			OR phase, 10;
+			OUTPUT phase,01; output the register
+			AND phase,30;
+			OUTPUT phase,01; output the register	
+			AND phase,20;
+			OUTPUT phase,01; output the register
+			OR phase, 20;
+			OUTPUT phase,01; output the register
+			OR phase, a0;
+			OUTPUT phase,01; output the register
+			OR phase, a0;
+			OUTPUT phase,01; output the register
+			OR phase, 20;
+			OUTPUT phase,01; output the register
+			OR phase, 20;
+			OUTPUT phase,01; output the register
+			AND phase, 60;
+			OUTPUT phase,01; output the register
+			
+			AND phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			OR phase, 40;
+			OUTPUT phase,01; output the register
+			AND phase, 00;
+			OUTPUT phase,01; output the register
+			JUMP NZ, line_loop;
+			RETURN 			
+
